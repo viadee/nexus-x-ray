@@ -5,6 +5,13 @@
 	<artifactId>nexus-x-ray</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<licenses>
+		<license>
+			<name>BSD-3 Clause</name>
+			<url>https://opensource.org/licenses/BSD-3-Clause</url>
+		</license>
+	</licenses>
+
 	<build>
 		<plugins>
 			<plugin>

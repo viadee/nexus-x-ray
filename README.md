@@ -34,8 +34,13 @@ Feel free to report issues, questions, ideas or patches. We are looking forward 
 
 
 ## Licenses
-All licenses of reused components can be found on the maven site 
-Currently we use no third-party dependencies, that are not distributed via maven.
+Currently we use the followeing third-party dependencies:
+#### Apache Commons: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+#### picocli: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+#### Logback: [Logback License](https://logback.qos.ch/license.html)
+#### SLF4J: [SLF4J License](https://www.slf4j.org/license.html)
+#### Mockito: [MIT License](https://opensource.org/licenses/mit-license.php)
+#### JUnit: [Eclipse Public License 1.0](https://junit.org/junit4/license.html)
 
 ### BSD 3-Clause License 
 
