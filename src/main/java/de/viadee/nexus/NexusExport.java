@@ -40,7 +40,7 @@ public class NexusExport implements Runnable {
    public static void main(String[] args) {
       CommandLine.run(new NexusExport(), System.out, args);
    }
-
+   
    public void run() {
       try {
          if (!propertiesFile.exists()) {
@@ -232,5 +232,21 @@ public class NexusExport implements Runnable {
             return null;
          }
       }
+   }
+
+   public File getPropertiesFile() {
+      return propertiesFile;
+   }
+
+   public void setPropertiesFile(File propertiesFile) {
+      this.propertiesFile = propertiesFile;
+   }
+
+   public File getOutputFile() {
+      return outputFile;
+   }
+
+   public void setOutputFile(File outputFile) {
+      this.outputFile = outputFile;
    }
 }
