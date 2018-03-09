@@ -38,10 +38,15 @@ public class ExportService {
 	return entry.getDockerManifestName() != null && !entry.getDockerManifestName().equals("");
     }
     
-    public void propertiesToCSV(final File[] directoriesToRead, final File csvFile) throws IOException {
+    public void propertiesToCSV(File[] directoriesToRead, final File csvFile) throws IOException {
 	try (FileOutputStream fileOut = new FileOutputStream(csvFile);
 		BufferedOutputStream bos = new BufferedOutputStream(fileOut);
 		OutputStreamWriter out = new OutputStreamWriter(bos, "UTF-8")) {
+	    
+	    if (directoriesToRead == null) {
+		directoriesToRead = new File[0];
+	    }
+	    
 	    final CSVFormat format = CSVFormat.EXCEL.withHeader("Repository Name", "Blob Name", "Size", "Content-Type",
 		    "Creation Time", "Deleted", "File", "Maven Group", "Maven Artifact", "Maven Version", "Docker Name",
 		    "Docker Version");
