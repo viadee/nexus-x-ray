@@ -7,20 +7,6 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.Queue;
-import java.util.function.Consumer;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
@@ -41,6 +27,8 @@ public class NexusExport implements Runnable {
     @Option(names = { "-o", "--output-file" }, description = "Output file to use")
     private File outputFile;
 
+    private ExportService exportService;
+    
     public static void main(String[] args) {
 	CommandLine.run(new NexusExport(), System.out, args);
     }
@@ -48,6 +36,8 @@ public class NexusExport implements Runnable {
     @Override
     public void run() {
 	try {
+	    exportService = new ExportService();
+
 	    if (!propertiesFile.exists()) {
 		logger.info("Das angegebene Properties directory existiert nicht: " + propertiesFile);
 		return;
@@ -56,96 +46,13 @@ public class NexusExport implements Runnable {
 	    logger.info("Verwende Properties directory: " + propertiesFile);
 	    logger.info("Zieldate: " + outputFile);
 
-	    propertiesToCSV(propertiesFile, outputFile);
+	    exportService.propertiesToCSV(propertiesFile, outputFile);
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
     }
 
-    public void propertiesToCSV(final File root, final File csvFile) throws IOException {
-	try (FileOutputStream fileOut = new FileOutputStream(csvFile);
-		BufferedOutputStream bos = new BufferedOutputStream(fileOut);
-		OutputStreamWriter out = new OutputStreamWriter(bos, "UTF-8")) {
-	    final CSVFormat format = CSVFormat.EXCEL.withHeader("Repository Name", "Blob Name", "Size", "Content-Type",
-		    "Creation Time", "Deleted", "File", "Maven Group", "Maven Artifact", "Maven Version", "Docker Name",
-		    "Docker Version");
-
-	    final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
-		    Locale.GERMAN);
-	    out.write("sep=,\n");
-	    
-	    List<RepositoryEntry> entries = readEntries(root);
-	    Collections.sort(entries);
-	    final CSVPrinter printer = format.print(out);
-
-	    for (RepositoryEntry entry : entries) {
-		try {
-		    printer.printRecord(entry.repoName, entry.blobName, entry.size, entry.contentType,
-			    dateFormat.format(entry.creationTime), entry.deleted, entry.file.getAbsolutePath(),
-			    entry.getMavenGroupName(), entry.getMavenArtifactName(), entry.getMavenVersion(),
-			    entry.getDockerManifestName(), entry.getDockerManifestVersion());
-		} catch (final IOException ioe) {
-		    throw new RuntimeException(ioe);
-		}
-	    }
-	}
-    }
-
-    public List<RepositoryEntry> readEntries(final File root) {
-	final List<RepositoryEntry> list = new ArrayList<>();
-	final Consumer<File> consumer = stream -> list.add(readEntry(stream));
-	performAction(root, propertiesFileFilter, consumer);
-	return list;
-    }
-
-    public void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
-	final List<File> files = new ArrayList<>();
-	final Queue<File> directories = new LinkedList<File>();
-	directories.add(root);
-
-	final FileFilter directoryFilter = f -> f.isDirectory();
-	while (!directories.isEmpty()) {
-	    final File dir = directories.poll();
-	    logger.info("Durchsuche Verzeichnis " + dir.getAbsolutePath());
-
-	    final File[] newFiles = dir.listFiles(filter);
-	    Arrays.stream(newFiles).forEach(files::add);
-	    logger.info(newFiles.length + " Datei(en) gefunden.");
-
-	    final File[] subDirectories = dir.listFiles(directoryFilter);
-	    Arrays.stream(subDirectories).forEach(directories::add);
-	}
-
-	int counter = 0;
-	for (final File file : files) {
-	    action.accept(file);
-	    counter++;
-	    if (counter % 100 == 0 || counter == files.size()) {
-		logger.info(counter + " von " + files.size() + " Dateien verarbeitet.");
-	    }
-	}
-    }
-
-    public static RepositoryEntry readEntry(final File file) {
-	try (final FileInputStream inputStream = new FileInputStream(file);
-		BufferedInputStream bufferIn = new BufferedInputStream(inputStream);
-		InputStreamReader reader = new InputStreamReader(bufferIn, "UTF-8")) {
-	    final Properties props = new Properties();
-	    props.load(reader);
-	    final RepositoryEntry entry = new RepositoryEntry();
-	    entry.file = file;
-	    entry.size = Long.valueOf(props.getProperty("size", "0"));
-	    entry.repoName = props.getProperty("@Bucket.repo-name");
-
-	    entry.creationTime = new Date(Long.parseLong(props.getProperty("creationTime", "0")));
-	    entry.blobName = props.getProperty("@BlobStore.blob-name");
-	    entry.contentType = props.getProperty("@BlobStore.content-type");
-	    entry.deleted = "true".equals(props.getProperty("deleted"));
-	    return entry;
-	} catch (final IOException ioe) {
-	    throw new RuntimeException(ioe);
-	}
-    }
+   
 
     public static boolean isMavenArtifact(final RepositoryEntry entry) {
 	return !isDockerArtifact(entry);
