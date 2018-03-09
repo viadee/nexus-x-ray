@@ -26,7 +26,7 @@ import org.apache.commons.csv.CSVPrinter;
 
 public class ExportService {
 
-    static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
+    private static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
     public void propertiesToCSV(final File root, final File csvFile) throws IOException {
 	try (FileOutputStream fileOut = new FileOutputStream(csvFile);
@@ -57,14 +57,14 @@ public class ExportService {
 	}
     }
 
-    public static Collection<RepositoryEntry> readEntries(final File root) {
+    public Collection<RepositoryEntry> readEntries(final File root) {
 	final List<RepositoryEntry> list = new ArrayList<>();
 	final Consumer<File> consumer = stream -> list.add(readEntry(stream));
 	performAction(root, propertiesFileFilter, consumer);
 	return list;
     }
 
-    public static void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
+    public void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
 	final List<File> files = new ArrayList<>();
 	final Queue<File> directories = new LinkedList<File>();
 	directories.add(root);
@@ -92,7 +92,7 @@ public class ExportService {
 	}
     }
 
-    public static RepositoryEntry readEntry(final File file) {
+    public RepositoryEntry readEntry(final File file) {
 	try (final FileInputStream inputStream = new FileInputStream(file);
 		BufferedInputStream bufferIn = new BufferedInputStream(inputStream);
 		InputStreamReader reader = new InputStreamReader(bufferIn, "UTF-8")) {
