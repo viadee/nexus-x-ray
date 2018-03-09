@@ -34,7 +34,7 @@ Feel free to report issues, questions, ideas or patches. We are looking forward 
 
 
 ## Licenses
-Currently we use the followeing third-party dependencies:
+Currently we use the following third-party dependencies:
 * Apache Commons: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * picocli: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * Logback: [Logback License](https://logback.qos.ch/license.html)
