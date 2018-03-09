@@ -9,12 +9,12 @@ public class CommandLineTest {
 
    @Test
    public void testCommandLines() {
-      String[] args = new String[] {"-p", "d:\\temp\\nexus-properties", "-o", "output.csv" };
+      String[] args = new String[] {"-o", "output.csv", "d:\\temp\\nexus-properties" };
       NexusExport instance = new NexusExport();
       CommandLine.run(instance, System.out, args);
       
       Assert.assertNotNull(instance.getOutputFile());
-      Assert.assertNotNull(instance.getPropertiesFile());
+      Assert.assertNotNull(instance.getPropertiesFiles());
 
       
    }
