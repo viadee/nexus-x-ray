@@ -1,6 +1,6 @@
 # Nexus X-Ray
 
-![alt text](usage_zeke.png)
+![alt text](img/usage_zeke.png)
 
 This Project is to analyze an existing Sonatype Nexus Repository 
 installation, to identify projects or artifacts with high disk usage. 
