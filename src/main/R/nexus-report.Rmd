@@ -22,7 +22,9 @@ installAndLoad("ggplot2") # Charts
 installAndLoad("ggthemes") # Nice charts
 installAndLoad("grid") # Chart-Layout
 installAndLoad("scales")
-
+installAndLoad("wordcloud")
+installAndLoad("tm") # um keine Frequenzen für Wordcloud vorbereiten zu müssen
+installAndLoad("dplyr") # Filter und joins
 source("viadeeTheme.R")
 
 # Annahme: Der Zeitstempel in der CSV-Datei ist mit deutscher Locale formatiert.
@@ -34,11 +36,10 @@ entries$Creation.Date <- as.Date(substr(entries$Creation.Time,1,10), format="%d.
 
 ## Was ist im Nexus zu finden?
 
-Als erstes wird ein grober Überblick des Zeitlichen Ablaufs erstellt.
+Als erstes wird ein grober Überblick des zeitlichen Ablaufs erstellt. Ein Balken steht dabei für eine Woche.
 
 
-```{r load}
-summary(entries)
+```{r timeSeries}
 
 viadee(ggplot()) +
   geom_histogram(
@@ -53,6 +54,49 @@ viadee(ggplot()) +
   labs(
     title="Nexus artefacts by create date",
     x ="Creation Date", y = "Number of artefacts")
-  
+
+
+```
+
+```{r doesDeletionWork}
+
+viadee(ggplot()) +
+  geom_histogram(
+    data=entries, 
+    aes(x=entries$Creation.Date, fill=entries$Deleted), 
+    binwidth=7,
+    color="white",
+    alpha=0.6) +
+  theme_economist()+
+  scale_y_continuous(labels = comma)+
+  labs(
+    title="Nexus artefacts by create date",
+    x ="Creation Date", y = "Number of artefacts")
+
+```
+
+```{r sizeScaling}
+
+viadee(ggplot()) +
+  geom_histogram(
+    data=entries, 
+    aes(x=entries$Creation.Date, fill=entries$Deleted, weight=entries$Size), 
+    binwidth=7,
+    color="white",
+    alpha=0.6) +
+  theme_economist()+
+  scale_y_continuous(labels = comma)+
+  labs(
+    title="Nexus artefacts by create date (size-scaled)",
+    x ="Creation Date", y = "Size of artefacts (byte)")
+
+```
+
+```{r tagCloud}
+
+  ourEntriesSnapshots <- entries %>% filter(entries$Repository.Name=="maven-snapshots")  
+  ourEntriesReleases <- entries %>% filter(entries$Repository.Name=="maven-releases")  
+  wordcloud(words=ourEntriesSnapshots$Maven.Group, random.color = TRUE)
+  wordcloud(words=ourEntriesReleases$Maven.Group, colors = TRUE)
 
 ```
