@@ -1,0 +1,58 @@
+---
+title: "Nexus X-Ray"
+author: "Ship-It-Team 2018"
+date: "9 März 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Convenience method that makes sure all required
+# packages are present
+installAndLoad <- function(package){
+  if(!eval(parse(text=paste("require(",package,")")))) 
+  { 
+    install.packages(package, repos = "https://cran.uni-muenster.de/")
+    eval(parse(text=paste("require(",package,")")))
+  }
+}
+
+installAndLoad("ggplot2") # Charts
+installAndLoad("ggthemes") # Nice charts
+installAndLoad("grid") # Chart-Layout
+installAndLoad("scales")
+
+source("viadeeTheme.R")
+
+# Annahme: Der Zeitstempel in der CSV-Datei ist mit deutscher Locale formatiert.
+entries <- read.csv("../../../data/entries.csv", sep=",")
+entries$Creation.Date <- as.Date(substr(entries$Creation.Time,1,10), format="%d.%m.%Y")
+
+
+```
+
+## Was ist im Nexus zu finden?
+
+Als erstes wird ein grober Überblick des Zeitlichen Ablaufs erstellt.
+
+
+```{r load}
+summary(entries)
+
+viadee(ggplot()) +
+  geom_histogram(
+    data=entries, 
+    aes(x=entries$Creation.Date), 
+    binwidth=7,
+    color="white",
+    fill="white",
+    alpha=0.6) +
+  theme_economist()+
+  scale_y_continuous(labels = comma)+
+  labs(
+    title="Nexus artefacts by create date",
+    x ="Creation Date", y = "Number of artefacts")
+  
+
+```
