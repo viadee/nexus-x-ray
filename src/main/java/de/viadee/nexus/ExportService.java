@@ -12,7 +12,7 @@ import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,8 +41,11 @@ public class ExportService {
 	    out.write("sep=,\n");
 	    final CSVPrinter printer = format.print(out);
 
-	    final Consumer<File> consumer = w -> {
-		final RepositoryEntry entry = readEntry(w);
+	    
+	    List<RepositoryEntry> entries = readEntries(root);
+	    Collections.sort(entries);
+
+	    for (RepositoryEntry entry : entries) {
 		try {
 		    printer.printRecord(entry.repoName, entry.blobName, entry.size, entry.contentType,
 			    dateFormat.format(entry.creationTime), entry.deleted, entry.file.getAbsolutePath(),
@@ -51,13 +54,12 @@ public class ExportService {
 		} catch (final IOException ioe) {
 		    throw new RuntimeException(ioe);
 		}
-	    };
-
-	    performAction(root, propertiesFileFilter, consumer);
+	    }
+	    
 	}
     }
 
-    public static Collection<RepositoryEntry> readEntries(final File root) {
+    public static List<RepositoryEntry> readEntries(final File root) {
 	final List<RepositoryEntry> list = new ArrayList<>();
 	final Consumer<File> consumer = stream -> list.add(readEntry(stream));
 	performAction(root, propertiesFileFilter, consumer);
