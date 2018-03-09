@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.function.Consumer;
@@ -39,7 +40,7 @@ public class NexusExport implements Runnable {
    public static void main(String[] args) {
       CommandLine.run(new NexusExport(), System.out, args);
    }
-   
+
    public void run() {
       try {
          propertiesToCSV(propertiesFile, outputFile);
@@ -56,7 +57,8 @@ public class NexusExport implements Runnable {
                "Creation Time", "Deleted", "File", "Maven Group", "Maven Artifact", "Maven Version", "Docker Name",
                "Docker Version");
 
-         final DateFormat dateFormat = DateFormat.getDateTimeInstance();
+         final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
+               Locale.GERMAN);
          out.write("sep=,\n");
          final CSVPrinter printer = format.print(out);
 
