@@ -1,12 +1,20 @@
 package de.viadee.nexus;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class NexusExport implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(NexusExport.class);
+
+    static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
     @Option(names = { "-p", "--properties-file" }, description = "Properties file to use")
     private File propertiesFile;
@@ -14,26 +22,32 @@ public class NexusExport implements Runnable {
     @Option(names = { "-o", "--output-file" }, description = "Output file to use")
     private File outputFile;
 
-    public static void main(final String[] args) {
+    private ExportService exportService;
+    
+    public static void main(String[] args) {
 	CommandLine.run(new NexusExport(), System.out, args);
     }
 
     @Override
     public void run() {
 	try {
+	    exportService = new ExportService();
+
 	    if (!propertiesFile.exists()) {
-		System.out.println("Das angegebene Properties directory existiert nicht: " + propertiesFile);
+		logger.info("Das angegebene Properties directory existiert nicht: " + propertiesFile);
 		return;
 	    }
 
-	    System.out.println("Verwende Properties directory: " + propertiesFile);
-	    System.out.println("Zieldate: " + outputFile);
+	    logger.info("Verwende Properties directory: " + propertiesFile);
+	    logger.info("Zieldate: " + outputFile);
 
-	    new ExportService().propertiesToCSV(propertiesFile, outputFile);
-	} catch (final IOException e) {
+	    exportService.propertiesToCSV(propertiesFile, outputFile);
+	} catch (IOException e) {
 	    e.printStackTrace();
 	}
     }
+
+   
 
     public static boolean isMavenArtifact(final RepositoryEntry entry) {
 	return !isDockerArtifact(entry);
@@ -47,7 +61,7 @@ public class NexusExport implements Runnable {
 	return propertiesFile;
     }
 
-    public void setPropertiesFile(final File propertiesFile) {
+    public void setPropertiesFile(File propertiesFile) {
 	this.propertiesFile = propertiesFile;
     }
 
@@ -55,7 +69,7 @@ public class NexusExport implements Runnable {
 	return outputFile;
     }
 
-    public void setOutputFile(final File outputFile) {
+    public void setOutputFile(File outputFile) {
 	this.outputFile = outputFile;
     }
 }
