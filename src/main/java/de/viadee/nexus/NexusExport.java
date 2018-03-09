@@ -29,224 +29,225 @@ import picocli.CommandLine.Option;
 
 public class NexusExport implements Runnable {
 
-   static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
+    static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
-   @Option(names = { "-p", "--properties-file" }, description = "Properties file to use")
-   private File propertiesFile;
+    @Option(names = { "-p", "--properties-file" }, description = "Properties file to use")
+    private File propertiesFile;
 
-   @Option(names = { "-o", "--output-file" }, description = "Output file to use")
-   private File outputFile;
+    @Option(names = { "-o", "--output-file" }, description = "Output file to use")
+    private File outputFile;
 
-   public static void main(String[] args) {
-      CommandLine.run(new NexusExport(), System.out, args);
-   }
-   
-   public void run() {
-      try {
-         if (!propertiesFile.exists()) {
-            System.out.println("Das angegebene Properties directory existiert nicht: " + propertiesFile);
-            return;
-         }
+    public static void main(String[] args) {
+	CommandLine.run(new NexusExport(), System.out, args);
+    }
 
-         System.out.println("Verwende Properties directory: " + propertiesFile);
-         System.out.println("Zieldate: " + outputFile);
+    @Override
+    public void run() {
+	try {
+	    if (!propertiesFile.exists()) {
+		System.out.println("Das angegebene Properties directory existiert nicht: " + propertiesFile);
+		return;
+	    }
 
-         propertiesToCSV(propertiesFile, outputFile);
-      } catch (IOException e) {
-         e.printStackTrace();
-      }
-   }
+	    System.out.println("Verwende Properties directory: " + propertiesFile);
+	    System.out.println("Zieldate: " + outputFile);
 
-   public void propertiesToCSV(final File root, final File csvFile) throws IOException {
-      try (FileOutputStream fileOut = new FileOutputStream(csvFile);
-            BufferedOutputStream bos = new BufferedOutputStream(fileOut);
-            OutputStreamWriter out = new OutputStreamWriter(bos, "UTF-8")) {
-         final CSVFormat format = CSVFormat.EXCEL.withHeader("Repository Name", "Blob Name", "Size", "Content-Type",
-               "Creation Time", "Deleted", "File", "Maven Group", "Maven Artifact", "Maven Version", "Docker Name",
-               "Docker Version");
+	    propertiesToCSV(propertiesFile, outputFile);
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+    }
 
-         final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
-               Locale.GERMAN);
-         out.write("sep=,\n");
-         final CSVPrinter printer = format.print(out);
+    public void propertiesToCSV(final File root, final File csvFile) throws IOException {
+	try (FileOutputStream fileOut = new FileOutputStream(csvFile);
+		BufferedOutputStream bos = new BufferedOutputStream(fileOut);
+		OutputStreamWriter out = new OutputStreamWriter(bos, "UTF-8")) {
+	    final CSVFormat format = CSVFormat.EXCEL.withHeader("Repository Name", "Blob Name", "Size", "Content-Type",
+		    "Creation Time", "Deleted", "File", "Maven Group", "Maven Artifact", "Maven Version", "Docker Name",
+		    "Docker Version");
 
-         final Consumer<File> consumer = w -> {
-            final RepositoryEntry entry = readEntry(w);
-            try {
-               printer.printRecord(entry.repoName, entry.blobName, entry.size, entry.contentType,
-                     dateFormat.format(entry.creationTime), entry.deleted, entry.file.getAbsolutePath(),
-                     entry.getMavenGroupName(), entry.getMavenArtifactName(), entry.getMavenVersion(),
-                     entry.getDockerManifestName(), entry.getDockerManifestVersion());
-            } catch (final IOException ioe) {
-               throw new RuntimeException(ioe);
-            }
-         };
+	    final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
+		    Locale.GERMAN);
+	    out.write("sep=,\n");
+	    final CSVPrinter printer = format.print(out);
 
-         performAction(root, propertiesFileFilter, consumer);
-      }
-   }
+	    final Consumer<File> consumer = w -> {
+		final RepositoryEntry entry = readEntry(w);
+		try {
+		    printer.printRecord(entry.repoName, entry.blobName, entry.size, entry.contentType,
+			    dateFormat.format(entry.creationTime), entry.deleted, entry.file.getAbsolutePath(),
+			    entry.getMavenGroupName(), entry.getMavenArtifactName(), entry.getMavenVersion(),
+			    entry.getDockerManifestName(), entry.getDockerManifestVersion());
+		} catch (final IOException ioe) {
+		    throw new RuntimeException(ioe);
+		}
+	    };
 
-   public static Collection<RepositoryEntry> readEntries(final File root) {
-      final List<RepositoryEntry> list = new ArrayList<>();
-      final Consumer<File> consumer = stream -> list.add(readEntry(stream));
-      performAction(root, propertiesFileFilter, consumer);
-      return list;
-   }
+	    performAction(root, propertiesFileFilter, consumer);
+	}
+    }
 
-   public static void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
-      final List<File> files = new ArrayList<>();
-      final Queue<File> directories = new LinkedList<File>();
-      directories.add(root);
+    public static Collection<RepositoryEntry> readEntries(final File root) {
+	final List<RepositoryEntry> list = new ArrayList<>();
+	final Consumer<File> consumer = stream -> list.add(readEntry(stream));
+	performAction(root, propertiesFileFilter, consumer);
+	return list;
+    }
 
-      final FileFilter directoryFilter = f -> f.isDirectory();
-      while (!directories.isEmpty()) {
-         final File dir = directories.poll();
-         System.out.println("Durchsuche Verzeichnis " + dir.getAbsolutePath());
+    public static void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
+	final List<File> files = new ArrayList<>();
+	final Queue<File> directories = new LinkedList<File>();
+	directories.add(root);
 
-         final File[] newFiles = dir.listFiles(filter);
-         Arrays.stream(newFiles).forEach(files::add);
-         System.out.println(newFiles.length + " Datei(en) gefunden.");
+	final FileFilter directoryFilter = f -> f.isDirectory();
+	while (!directories.isEmpty()) {
+	    final File dir = directories.poll();
+	    System.out.println("Durchsuche Verzeichnis " + dir.getAbsolutePath());
 
-         final File[] subDirectories = dir.listFiles(directoryFilter);
-         Arrays.stream(subDirectories).forEach(directories::add);
-      }
+	    final File[] newFiles = dir.listFiles(filter);
+	    Arrays.stream(newFiles).forEach(files::add);
+	    System.out.println(newFiles.length + " Datei(en) gefunden.");
 
-      int counter = 0;
-      for (final File file : files) {
-         action.accept(file);
-         counter++;
-         if (counter % 100 == 0 || counter == files.size()) {
-            System.out.println(counter + " von " + files.size() + " Dateien verarbeitet.");
-         }
-      }
-   }
+	    final File[] subDirectories = dir.listFiles(directoryFilter);
+	    Arrays.stream(subDirectories).forEach(directories::add);
+	}
 
-   public static RepositoryEntry readEntry(final File file) {
-      try (final FileInputStream inputStream = new FileInputStream(file);
-            BufferedInputStream bufferIn = new BufferedInputStream(inputStream);
-            InputStreamReader reader = new InputStreamReader(bufferIn, "UTF-8")) {
-         final Properties props = new Properties();
-         props.load(reader);
-         final RepositoryEntry entry = new RepositoryEntry();
-         entry.file = file;
-         entry.size = Long.valueOf(props.getProperty("size", "0"));
-         entry.repoName = props.getProperty("@Bucket.repo-name");
+	int counter = 0;
+	for (final File file : files) {
+	    action.accept(file);
+	    counter++;
+	    if (counter % 100 == 0 || counter == files.size()) {
+		System.out.println(counter + " von " + files.size() + " Dateien verarbeitet.");
+	    }
+	}
+    }
 
-         entry.creationTime = new Date(Long.parseLong(props.getProperty("creationTime", "0")));
-         entry.blobName = props.getProperty("@BlobStore.blob-name");
-         entry.contentType = props.getProperty("@BlobStore.content-type");
-         entry.deleted = "true".equals(props.getProperty("deleted"));
-         return entry;
-      } catch (final IOException ioe) {
-         throw new RuntimeException(ioe);
-      }
-   }
+    public static RepositoryEntry readEntry(final File file) {
+	try (final FileInputStream inputStream = new FileInputStream(file);
+		BufferedInputStream bufferIn = new BufferedInputStream(inputStream);
+		InputStreamReader reader = new InputStreamReader(bufferIn, "UTF-8")) {
+	    final Properties props = new Properties();
+	    props.load(reader);
+	    final RepositoryEntry entry = new RepositoryEntry();
+	    entry.file = file;
+	    entry.size = Long.valueOf(props.getProperty("size", "0"));
+	    entry.repoName = props.getProperty("@Bucket.repo-name");
 
-   public static boolean isMavenArtifact(final RepositoryEntry entry) {
-      return !isDockerArtifact(entry);
-   }
+	    entry.creationTime = new Date(Long.parseLong(props.getProperty("creationTime", "0")));
+	    entry.blobName = props.getProperty("@BlobStore.blob-name");
+	    entry.contentType = props.getProperty("@BlobStore.content-type");
+	    entry.deleted = "true".equals(props.getProperty("deleted"));
+	    return entry;
+	} catch (final IOException ioe) {
+	    throw new RuntimeException(ioe);
+	}
+    }
 
-   private static boolean isDockerArtifact(final RepositoryEntry entry) {
-      return entry.repoName.contains("docker");
-   }
+    public static boolean isMavenArtifact(final RepositoryEntry entry) {
+	return !isDockerArtifact(entry);
+    }
 
-   public static class RepositoryEntry {
+    private static boolean isDockerArtifact(final RepositoryEntry entry) {
+	return entry.repoName.contains("docker");
+    }
 
-      File file;
+    public static class RepositoryEntry {
 
-      long size;
+	File file;
 
-      String repoName;
+	long size;
 
-      Date creationTime;
+	String repoName;
 
-      String blobName;
+	Date creationTime;
 
-      String contentType;
+	String blobName;
 
-      boolean deleted;
+	String contentType;
 
-      @Override
-      public String toString() {
-         return "RepositoryEntry [blobName=" + blobName + ", repoName=" + repoName + ", size=" + size
-               + ", creationTime=" + creationTime + ", contentType=" + contentType + ", deleted=" + deleted + ", file="
-               + file.getAbsolutePath() + "]";
-      }
+	boolean deleted;
 
-      public String getMavenVersion() {
-         if (isMavenArtifact(this)) {
-            final String[] parts = blobName.split("/");
-            return parts.length > 2 ? parts[parts.length - 2] : null;
-         } else {
-            return null;
-         }
-      }
+	@Override
+	public String toString() {
+	    return "RepositoryEntry [blobName=" + blobName + ", repoName=" + repoName + ", size=" + size
+		    + ", creationTime=" + creationTime + ", contentType=" + contentType + ", deleted=" + deleted
+		    + ", file=" + file.getAbsolutePath() + "]";
+	}
 
-      public String getMavenArtifactName() {
-         if (isMavenArtifact(this)) {
-            final String[] parts = blobName.split("/");
-            return parts.length > 3 ? parts[parts.length - 3] : null;
-         } else {
-            return null;
-         }
-      }
+	public String getMavenVersion() {
+	    if (isMavenArtifact(this)) {
+		final String[] parts = blobName.split("/");
+		return parts.length > 2 ? parts[parts.length - 2] : null;
+	    } else {
+		return null;
+	    }
+	}
 
-      public String getMavenGroupName() {
-         if (isMavenArtifact(this)) {
-            final String[] parts = blobName.split("/");
-            final StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < parts.length - 3; i++) {
-               if (i > 0) {
-                  sb.append('.');
-               }
-               sb.append(parts[i]);
-            }
-            return sb.toString();
-         } else {
-            return null;
-         }
-      }
+	public String getMavenArtifactName() {
+	    if (isMavenArtifact(this)) {
+		final String[] parts = blobName.split("/");
+		return parts.length > 3 ? parts[parts.length - 3] : null;
+	    } else {
+		return null;
+	    }
+	}
 
-      public String getDockerManifestName() {
-         if (isDockerArtifact(this)) {
-            final String[] parts = blobName.split("/");
-            if ("manifests".equals(parts[2])) {
-               return parts[1];
-            } else {
-               return null;
-            }
-         } else {
-            return null;
-         }
-      }
+	public String getMavenGroupName() {
+	    if (isMavenArtifact(this)) {
+		final String[] parts = blobName.split("/");
+		final StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < parts.length - 3; i++) {
+		    if (i > 0) {
+			sb.append('.');
+		    }
+		    sb.append(parts[i]);
+		}
+		return sb.toString();
+	    } else {
+		return null;
+	    }
+	}
 
-      public String getDockerManifestVersion() {
-         if (isDockerArtifact(this)) {
-            final String[] parts = blobName.split("/");
-            if ("manifests".equals(parts[2])) {
-               return parts[3];
-            } else {
-               return null;
-            }
-         } else {
-            return null;
-         }
-      }
-   }
+	public String getDockerManifestName() {
+	    if (isDockerArtifact(this)) {
+		final String[] parts = blobName.split("/");
+		if ("manifests".equals(parts[2])) {
+		    return parts[1];
+		} else {
+		    return null;
+		}
+	    } else {
+		return null;
+	    }
+	}
 
-   public File getPropertiesFile() {
-      return propertiesFile;
-   }
+	public String getDockerManifestVersion() {
+	    if (isDockerArtifact(this)) {
+		final String[] parts = blobName.split("/");
+		if ("manifests".equals(parts[2])) {
+		    return parts[3];
+		} else {
+		    return null;
+		}
+	    } else {
+		return null;
+	    }
+	}
+    }
 
-   public void setPropertiesFile(File propertiesFile) {
-      this.propertiesFile = propertiesFile;
-   }
+    public File getPropertiesFile() {
+	return propertiesFile;
+    }
 
-   public File getOutputFile() {
-      return outputFile;
-   }
+    public void setPropertiesFile(File propertiesFile) {
+	this.propertiesFile = propertiesFile;
+    }
 
-   public void setOutputFile(File outputFile) {
-      this.outputFile = outputFile;
-   }
+    public File getOutputFile() {
+	return outputFile;
+    }
+
+    public void setOutputFile(File outputFile) {
+	this.outputFile = outputFile;
+    }
 }
