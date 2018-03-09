@@ -1,6 +1,6 @@
 # Nexus X-Ray
 
-![alt text](usage.png)
+![alt text](usage_zeke.png)
 
 This Project is to analyze an existing Sonatype Nexus Repository 
 installation, to identify projects or artifacts with high disk usage. 
@@ -22,6 +22,5 @@ All dependencies for the CLI are given with the included `pom.xml`.
 You should install R Studio to create diagrams.
 
 
-## Usage
 
-Blabla
+
