@@ -58,6 +58,8 @@ viadee(ggplot()) +
 
 ```
 
+Es ist nicht immer klar, welche Artefakte wann gelöscht werden. Gibt es Artefakte, die vorhanden sind aber ein Lösch-Flag gesetzt haben?
+
 ```{r doesDeletionWork}
 
 viadee(ggplot()) +
@@ -74,6 +76,8 @@ viadee(ggplot()) +
     x ="Creation Date", y = "Number of artefacts")
 
 ```
+
+Bis jetzt wurden nur die Anzahlen von Artefakten dargestellt. Für praktische Zwecke braucht man einen Überblick des verwendeten Speicherplatzes:
 
 ```{r sizeScaling}
 
@@ -92,13 +96,17 @@ viadee(ggplot()) +
 
 ```
 
+## Wer war es?
+
+Auf den o.g. Daten ist noch nicht zu erkennen, welche Projekte den Speicherplatz nutzen. Die Analyse fokussiert dabei zunächst die Maven-Repositories, d.h. Snapshots und Releases und gruppiert dies nach Maven-Groups. Hinweis: Damit sind Docker-Container an dieser Stelle nicht enthalten.
+
 ```{r tagCloudMaven}
 
   ourEntries <- entries %>% 
     filter(entries$Repository.Name %in% c("maven-snapshots", "maven-releases"))  
 
   wordcloud(words=ourEntries$Maven.Group)
-  wordcloud(words=ourEntries$Maven.Artifact)
+  #wordcloud(words=ourEntries$Maven.Artifact)
   
   ourArtifacts <- ourEntries %>%
     group_by(Maven.Artifact, Repository.Name) %>%
@@ -116,6 +124,10 @@ viadee(ggplot()) +
     coord_flip()
   
 ```
+
+# Betrachtung inkl. Docker-Images
+
+Hier werfen wir einen Blick auf die Docker-Container.
 
 ```{r tagCloudDocker}
 
@@ -136,6 +148,36 @@ viadee(ggplot()) +
                colour="white", alpha=0.2, stat="Identity") +
       labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
            x = "Docker-Containers", y = "MB")+
+    coord_flip()
+  
+```
+
+Hier bilden wir noch einen Gesamtüberblick über Docker- und Maven-Nutzer.
+
+```{r overallSummary}
+
+  # Wir brauchen eine gemeinsamen Bezeichner, um Summen vergleichen zu können.
+  entries$group <- paste(entries$Maven.Artifact,entries$Docker.Name)
+
+  ourEntries <- entries %>% 
+    filter(entries$Repository.Name %in% c("maven-snapshots", "maven-releases", "viadee-docker-nas"))  
+
+  wordcloud(words=ourEntries$group)
+
+  ourContainerSizes <- ourEntries %>%
+    group_by(group, Repository.Name) %>%
+    summarise(MegaBytesUsed = sum(Size / 1024 / 1024)) %>%
+    arrange(desc(MegaBytesUsed)) %>%
+    head(20)
+    
+  viadee(ggplot(ourContainerSizes)) +
+      geom_bar(aes(x=reorder(ourContainerSizes$group, ourContainerSizes$MegaBytesUsed), 
+                   y=ourContainerSizes$MegaBytesUsed,
+                   group=ourContainerSizes$Repository.Name,
+                   fill=ourContainerSizes$Repository.Name), 
+               colour="white", alpha=0.6, stat="Identity") +
+      labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
+           x = "Docker-Container / Maven-Gruppen", y = "MB")+
     coord_flip()
   
 ```
