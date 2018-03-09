@@ -15,7 +15,7 @@ public class ExportServiceTest {
 
     @Test
     public void exportService() throws IOException {
-	ExportService service = new ExportService();
+	ExportService service = new ExportService(false);
 	ExportService spyedService = Mockito.spy(service);
 	
 

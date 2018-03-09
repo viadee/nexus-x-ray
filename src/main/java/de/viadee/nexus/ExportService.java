@@ -26,13 +26,19 @@ import org.apache.commons.csv.CSVPrinter;
 
 public class ExportService {
 
+    public ExportService(boolean doPrintSeparatorInFirstLine) {
+	this.doPrintSeparatorInFirstLine = doPrintSeparatorInFirstLine;
+    }
+    
     static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
+    private boolean doPrintSeparatorInFirstLine = false;
+    
     private boolean isDockerManifestFilled(RepositoryEntry entry) {
 	return entry.getDockerManifestName() != null && !entry.getDockerManifestName().equals("");
     }
     
-    public void propertiesToCSV(final File root, final File csvFile) throws IOException {
+    public void propertiesToCSV(final File[] directoriesToRead, final File csvFile) throws IOException {
 	try (FileOutputStream fileOut = new FileOutputStream(csvFile);
 		BufferedOutputStream bos = new BufferedOutputStream(fileOut);
 		OutputStreamWriter out = new OutputStreamWriter(bos, "UTF-8")) {
@@ -42,10 +48,16 @@ public class ExportService {
 
 	    final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
 		    Locale.GERMAN);
-	    out.write("sep=,\n");
+	    if (doPrintSeparatorInFirstLine) {
+		out.write("sep=,\n");
+	    }
 	    final CSVPrinter printer = format.print(out);
 
-	    List<RepositoryEntry> entries = readEntries(root);
+	    
+	    List<RepositoryEntry> entries = new ArrayList<>();
+	    for (File directory : directoriesToRead) {
+		entries.addAll(readEntries(directory));
+	    }
 	    Collections.sort(entries);
 	    RepositoryEntry lastDockerEntry = null;
 
@@ -95,11 +107,17 @@ public class ExportService {
 	    final File dir = directories.poll();
 	    System.out.println("Durchsuche Verzeichnis " + dir.getAbsolutePath());
 
-	    final File[] newFiles = dir.listFiles(filter);
+	     File[] newFiles = dir.listFiles(filter);
+	    if (newFiles == null) {
+		newFiles = new File[0];
+	    }
 	    Arrays.stream(newFiles).forEach(files::add);
 	    System.out.println(newFiles.length + " Datei(en) gefunden.");
 
-	    final File[] subDirectories = dir.listFiles(directoryFilter);
+	    File[] subDirectories = dir.listFiles(directoryFilter);
+	    if (subDirectories == null) {
+		subDirectories = new File[0];
+	    }
 	    Arrays.stream(subDirectories).forEach(directories::add);
 	}
 

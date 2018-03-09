@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 public class NexusExport implements Runnable {
 
@@ -16,11 +17,14 @@ public class NexusExport implements Runnable {
 
     static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
-    @Option(names = { "-p", "--properties-file" }, description = "Properties file to use")
-    private File propertiesFile;
+    @Parameters(arity = "1..*", paramLabel = "FILE", description = "Property directories to use")
+    private File[] propertiesDirectories;
 
     @Option(names = { "-o", "--output-file" }, description = "Output file to use")
     private File outputFile;
+    
+    @Option(arity = "0..1", names = { "-s", "--print-separator" }, description = "Print separtor in first line.")
+    private boolean doPrintSeparatorInFirstLine = false;
 
     private ExportService exportService;
     
@@ -31,17 +35,12 @@ public class NexusExport implements Runnable {
     @Override
     public void run() {
 	try {
-	    exportService = new ExportService();
+	    exportService = new ExportService(doPrintSeparatorInFirstLine);
 
-	    if (!propertiesFile.exists()) {
-		logger.info("Das angegebene Properties directory existiert nicht: " + propertiesFile);
-		return;
-	    }
-
-	    logger.info("Verwende Properties directory: " + propertiesFile);
+	    logger.info("Verwende Properties directories: " + propertiesDirectories);
 	    logger.info("Zieldate: " + outputFile);
 
-	    exportService.propertiesToCSV(propertiesFile, outputFile);
+	    exportService.propertiesToCSV(propertiesDirectories, outputFile);
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
@@ -57,12 +56,12 @@ public class NexusExport implements Runnable {
 	return entry.repoName.contains("docker");
     }
 
-    public File getPropertiesFile() {
-	return propertiesFile;
+    public File[] getPropertiesFiles() {
+	return propertiesDirectories;
     }
 
-    public void setPropertiesFile(File propertiesFile) {
-	this.propertiesFile = propertiesFile;
+    public void setPropertiesFiles(File[] propertiesDirectories) {
+	this.propertiesDirectories = propertiesDirectories;
     }
 
     public File getOutputFile() {
