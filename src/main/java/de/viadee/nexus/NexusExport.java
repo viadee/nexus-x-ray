@@ -12,7 +12,7 @@ import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,11 +23,15 @@ import java.util.function.Consumer;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class NexusExport implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(NexusExport.class);
 
     static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
@@ -45,12 +49,12 @@ public class NexusExport implements Runnable {
     public void run() {
 	try {
 	    if (!propertiesFile.exists()) {
-		System.out.println("Das angegebene Properties directory existiert nicht: " + propertiesFile);
+		logger.info("Das angegebene Properties directory existiert nicht: " + propertiesFile);
 		return;
 	    }
 
-	    System.out.println("Verwende Properties directory: " + propertiesFile);
-	    System.out.println("Zieldate: " + outputFile);
+	    logger.info("Verwende Properties directory: " + propertiesFile);
+	    logger.info("Zieldate: " + outputFile);
 
 	    propertiesToCSV(propertiesFile, outputFile);
 	} catch (IOException e) {
@@ -69,10 +73,12 @@ public class NexusExport implements Runnable {
 	    final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
 		    Locale.GERMAN);
 	    out.write("sep=,\n");
+	    
+	    List<RepositoryEntry> entries = readEntries(root);
+	    Collections.sort(entries);
 	    final CSVPrinter printer = format.print(out);
 
-	    final Consumer<File> consumer = w -> {
-		final RepositoryEntry entry = readEntry(w);
+	    for (RepositoryEntry entry : entries) {
 		try {
 		    printer.printRecord(entry.repoName, entry.blobName, entry.size, entry.contentType,
 			    dateFormat.format(entry.creationTime), entry.deleted, entry.file.getAbsolutePath(),
@@ -81,20 +87,18 @@ public class NexusExport implements Runnable {
 		} catch (final IOException ioe) {
 		    throw new RuntimeException(ioe);
 		}
-	    };
-
-	    performAction(root, propertiesFileFilter, consumer);
+	    }
 	}
     }
 
-    public static Collection<RepositoryEntry> readEntries(final File root) {
+    public List<RepositoryEntry> readEntries(final File root) {
 	final List<RepositoryEntry> list = new ArrayList<>();
 	final Consumer<File> consumer = stream -> list.add(readEntry(stream));
 	performAction(root, propertiesFileFilter, consumer);
 	return list;
     }
 
-    public static void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
+    public void performAction(final File root, final FileFilter filter, final Consumer<File> action) {
 	final List<File> files = new ArrayList<>();
 	final Queue<File> directories = new LinkedList<File>();
 	directories.add(root);
@@ -102,11 +106,11 @@ public class NexusExport implements Runnable {
 	final FileFilter directoryFilter = f -> f.isDirectory();
 	while (!directories.isEmpty()) {
 	    final File dir = directories.poll();
-	    System.out.println("Durchsuche Verzeichnis " + dir.getAbsolutePath());
+	    logger.info("Durchsuche Verzeichnis " + dir.getAbsolutePath());
 
 	    final File[] newFiles = dir.listFiles(filter);
 	    Arrays.stream(newFiles).forEach(files::add);
-	    System.out.println(newFiles.length + " Datei(en) gefunden.");
+	    logger.info(newFiles.length + " Datei(en) gefunden.");
 
 	    final File[] subDirectories = dir.listFiles(directoryFilter);
 	    Arrays.stream(subDirectories).forEach(directories::add);
@@ -117,7 +121,7 @@ public class NexusExport implements Runnable {
 	    action.accept(file);
 	    counter++;
 	    if (counter % 100 == 0 || counter == files.size()) {
-		System.out.println(counter + " von " + files.size() + " Dateien verarbeitet.");
+		logger.info(counter + " von " + files.size() + " Dateien verarbeitet.");
 	    }
 	}
     }
