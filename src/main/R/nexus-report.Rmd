@@ -1,0 +1,183 @@
+---
+title: "Nexus X-Ray"
+author: "Ship-It-Team 2018"
+date: "9 März 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Convenience method that makes sure all required
+# packages are present
+installAndLoad <- function(package){
+  if(!eval(parse(text=paste("require(",package,")")))) 
+  { 
+    install.packages(package, repos = "https://cran.uni-muenster.de/")
+    eval(parse(text=paste("require(",package,")")))
+  }
+}
+
+installAndLoad("ggplot2") # Charts
+installAndLoad("ggthemes") # Nice charts
+installAndLoad("grid") # Chart-Layout
+installAndLoad("scales")
+installAndLoad("wordcloud")
+installAndLoad("tm") # um keine Frequenzen für Wordcloud vorbereiten zu müssen
+installAndLoad("dplyr") # Filter und joins
+source("viadeeTheme.R")
+
+# Annahme: Der Zeitstempel in der CSV-Datei ist mit deutscher Locale formatiert.
+entries <- read.csv("../../../data/output.csv", sep=",")
+entries$Creation.Date <- as.Date(substr(entries$Creation.Time,1,10), format="%d.%m.%Y")
+
+
+```
+
+## Was ist im Nexus zu finden?
+
+Als erstes wird ein grober Überblick des zeitlichen Ablaufs erstellt. Ein Balken steht dabei für eine Woche.
+
+
+```{r timeSeries}
+
+viadee(ggplot()) +
+  geom_histogram(
+    data=entries, 
+    aes(x=entries$Creation.Date), 
+    binwidth=7,
+    color="white",
+    fill="white",
+    alpha=0.6) +
+  theme_economist()+
+  scale_y_continuous(labels = comma)+
+  labs(
+    title="Nexus artefacts by create date",
+    x ="Creation Date", y = "Number of artefacts")
+
+
+```
+
+Es ist nicht immer klar, welche Artefakte wann gelöscht werden. Gibt es Artefakte, die vorhanden sind aber ein Lösch-Flag gesetzt haben?
+
+```{r doesDeletionWork}
+
+viadee(ggplot()) +
+  geom_histogram(
+    data=entries, 
+    aes(x=entries$Creation.Date, fill=entries$Deleted), 
+    binwidth=7,
+    color="white",
+    alpha=0.6) +
+  theme_economist()+
+  scale_y_continuous(labels = comma)+
+  labs(
+    title="Nexus artefacts by create date",
+    x ="Creation Date", y = "Number of artefacts")
+
+```
+
+Bis jetzt wurden nur die Anzahlen von Artefakten dargestellt. Für praktische Zwecke braucht man einen Überblick des verwendeten Speicherplatzes:
+
+```{r sizeScaling}
+
+viadee(ggplot()) +
+  geom_histogram(
+    data=entries, 
+    aes(x=entries$Creation.Date, fill=entries$Deleted, weight=entries$Size), 
+    binwidth=7,
+    color="white",
+    alpha=0.6) +
+  theme_economist()+
+  scale_y_continuous(labels = comma)+
+  labs(
+    title="Nexus artefacts by create date (size-scaled)",
+    x ="Creation Date", y = "Size of artefacts (byte)")
+
+```
+
+## Wer war es?
+
+Auf den o.g. Daten ist noch nicht zu erkennen, welche Projekte den Speicherplatz nutzen. Die Analyse fokussiert dabei zunächst die Maven-Repositories, d.h. Snapshots und Releases und gruppiert dies nach Maven-Groups. Hinweis: Damit sind Docker-Container an dieser Stelle nicht enthalten.
+
+```{r tagCloudMaven}
+
+  ourEntries <- entries %>% 
+    filter(entries$Repository.Name %in% c("maven-snapshots", "maven-releases"))  
+
+  wordcloud(words=ourEntries$Maven.Group)
+  #wordcloud(words=ourEntries$Maven.Artifact)
+  
+  ourArtifacts <- ourEntries %>%
+    group_by(Maven.Artifact, Repository.Name) %>%
+    summarise(MegaBytesUsed = sum(Size / 1024 / 1024)) %>%
+    arrange(desc(MegaBytesUsed)) %>%
+    head(20)
+    
+  viadee(ggplot(ourArtifacts)) +
+      geom_bar(aes(x=reorder(ourArtifacts$Maven.Artifact, ourArtifacts$MegaBytesUsed), 
+                   y=ourArtifacts$MegaBytesUsed,
+                   fill=ourArtifacts$Repository.Name), 
+               colour="white", alpha=0.2, stat="Identity") +
+      labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
+           x = "Maven Artifacts", y = "MB")+
+    coord_flip()
+  
+```
+
+# Betrachtung inkl. Docker-Images
+
+Hier werfen wir einen Blick auf die Docker-Container.
+
+```{r tagCloudDocker}
+
+  ourContainers <- entries %>% 
+    filter(entries$Repository.Name %in% c("viadee-docker-nas"))  
+
+  wordcloud(words=ourContainers$Docker.Name)
+
+  ourContainerSizes <- ourContainers %>%
+    group_by(Docker.Name) %>%
+    summarise(MegaBytesUsed = sum(Size / 1024 / 1024)) %>%
+    arrange(desc(MegaBytesUsed)) %>%
+    head(20)
+    
+  viadee(ggplot(ourContainerSizes)) +
+      geom_bar(aes(x=reorder(ourContainerSizes$Docker.Name, ourContainerSizes$MegaBytesUsed), 
+                   y=ourContainerSizes$MegaBytesUsed), 
+               colour="white", alpha=0.2, stat="Identity") +
+      labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
+           x = "Docker-Containers", y = "MB")+
+    coord_flip()
+  
+```
+
+Hier bilden wir noch einen Gesamtüberblick über Docker- und Maven-Nutzer.
+
+```{r overallSummary}
+
+  # Wir brauchen eine gemeinsamen Bezeichner, um Summen vergleichen zu können.
+  entries$group <- paste(entries$Maven.Artifact,entries$Docker.Name)
+
+  ourEntries <- entries %>% 
+    filter(entries$Repository.Name %in% c("maven-snapshots", "maven-releases", "viadee-docker-nas"))  
+
+  wordcloud(words=ourEntries$group)
+
+  ourContainerSizes <- ourEntries %>%
+    group_by(group, Repository.Name) %>%
+    summarise(MegaBytesUsed = sum(Size / 1024 / 1024)) %>%
+    arrange(desc(MegaBytesUsed)) %>%
+    head(20)
+    
+  viadee(ggplot(ourContainerSizes)) +
+      geom_bar(aes(x=reorder(ourContainerSizes$group, ourContainerSizes$MegaBytesUsed), 
+                   y=ourContainerSizes$MegaBytesUsed,
+                   group=ourContainerSizes$Repository.Name,
+                   fill=ourContainerSizes$Repository.Name), 
+               colour="white", alpha=0.6, stat="Identity") +
+      labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
+           x = "Docker-Container / Maven-Gruppen", y = "MB")+
+    coord_flip()
+  
+```

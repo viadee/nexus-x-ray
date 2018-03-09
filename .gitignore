@@ -2,6 +2,7 @@
 .classpath
 .settings/
 target/
-/output.csv
-/rat@nexus.intern.viadee.de
-data/
+.Rproj.user
+data/entries.csv
+src/main/R/nexus-report.html
+data/output.csv
