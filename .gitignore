@@ -5,3 +5,4 @@ target/
 .Rproj.user
 data/entries.csv
 src/main/R/nexus-report.html
+data/output.csv
