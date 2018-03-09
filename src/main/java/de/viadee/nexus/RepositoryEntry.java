@@ -19,6 +19,10 @@ public class RepositoryEntry implements Comparable<RepositoryEntry> {
 
     boolean deleted;
 
+    private String explcitDockerManifestName;
+
+    private String explicitDockerManifestVersion;
+
     @Override
     public String toString() {
 	return "RepositoryEntry [blobName=" + blobName + ", repoName=" + repoName + ", size=" + size + ", creationTime="
@@ -61,7 +65,11 @@ public class RepositoryEntry implements Comparable<RepositoryEntry> {
     }
 
     public String getDockerManifestName() {
-	if (isDockerArtifact()) {
+	if (explcitDockerManifestName != null) {
+	    return explcitDockerManifestName;
+	}
+	
+	if (isDockerArtifact())  {
 	    final String[] parts = blobName.split("/");
 	    if ("manifests".equals(parts[2])) {
 		return parts[1];
@@ -74,6 +82,11 @@ public class RepositoryEntry implements Comparable<RepositoryEntry> {
     }
 
     public String getDockerManifestVersion() {
+	if (explicitDockerManifestVersion != null) {
+	    return explicitDockerManifestVersion;
+	}
+	
+	
 	if (isDockerArtifact()) {
 	    final String[] parts = blobName.split("/");
 	    if ("manifests".equals(parts[2])) {
@@ -101,5 +114,21 @@ public class RepositoryEntry implements Comparable<RepositoryEntry> {
 	}
 
 	return o.creationTime.before(this.creationTime) ? -1 : 1;
+    }
+
+    public String getExplcitDockerManifestName() {
+        return explcitDockerManifestName;
+    }
+
+    public void setExplcitDockerManifestName(String explcitDockerManifestName) {
+        this.explcitDockerManifestName = explcitDockerManifestName;
+    }
+
+    public String getExplicitDockerManifestVersion() {
+        return explicitDockerManifestVersion;
+    }
+
+    public void setExplicitDockerManifestVersion(String explicitDockerManifestVersion) {
+        this.explicitDockerManifestVersion = explicitDockerManifestVersion;
     }
 }

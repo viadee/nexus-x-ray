@@ -28,6 +28,10 @@ public class ExportService {
 
     static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
+    private boolean isDockerManifestFilled(RepositoryEntry entry) {
+	return entry.getDockerManifestName() != null && !entry.getDockerManifestName().equals("");
+    }
+    
     public void propertiesToCSV(final File root, final File csvFile) throws IOException {
 	try (FileOutputStream fileOut = new FileOutputStream(csvFile);
 		BufferedOutputStream bos = new BufferedOutputStream(fileOut);
@@ -41,11 +45,14 @@ public class ExportService {
 	    out.write("sep=,\n");
 	    final CSVPrinter printer = format.print(out);
 
-	    
 	    List<RepositoryEntry> entries = readEntries(root);
 	    Collections.sort(entries);
+	    RepositoryEntry lastDockerEntry = null;
 
 	    for (RepositoryEntry entry : entries) {
+		
+		lastDockerEntry = handleDockerEntries(lastDockerEntry, entry);
+		
 		try {
 		    printer.printRecord(entry.repoName, entry.blobName, entry.size, entry.contentType,
 			    dateFormat.format(entry.creationTime), entry.deleted, entry.file.getAbsolutePath(),
@@ -59,7 +66,19 @@ public class ExportService {
 	}
     }
 
-    public static List<RepositoryEntry> readEntries(final File root) {
+    private RepositoryEntry handleDockerEntries(RepositoryEntry lastDockerEntry, RepositoryEntry entry) {
+	if (isDockerManifestFilled(entry)) {
+	    lastDockerEntry = entry;
+	} else {
+	    if (entry.isDockerArtifact() && !isDockerManifestFilled(entry)) {
+		entry.setExplcitDockerManifestName(lastDockerEntry.getDockerManifestName());
+		entry.setExplicitDockerManifestVersion(lastDockerEntry.getDockerManifestVersion());
+	    }
+	}
+	return lastDockerEntry;
+    }
+
+    public List<RepositoryEntry> readEntries(File root) {
 	final List<RepositoryEntry> list = new ArrayList<>();
 	final Consumer<File> consumer = stream -> list.add(readEntry(stream));
 	performAction(root, propertiesFileFilter, consumer);
