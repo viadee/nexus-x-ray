@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
-import java.text.Format;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +40,6 @@ public class NexusExport {
     static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
     public static void main(final String[] args) throws IOException {
-        final Format format = NumberFormat.getIntegerInstance(Locale.GERMANY);
 
         final File root = new File("d:\\temp\\nexus-properties");
         final Collection<RepositoryEntry> entries = readEntries(root);
@@ -58,35 +55,8 @@ public class NexusExport {
             add(repoNames, entry.repoName, entry.size);
             add(contentTypes, entry.contentType, entry.size);
         }
-        // System.out.println(format.format(size) + " Bytes. " + entries.size() + " elements.");
-        //
-        // for (final Entry<String, Long> repoName : repoNames.entrySet()) {
-        // System.out.println(repoName.getKey() + ": " + format.format(repoName.getValue()));
-        // }
-        //
-        // for (final Entry<String, Long> contentType : contentTypes.entrySet()) {
-        // System.out.println(contentType.getKey() + ": " + format.format(contentType.getValue()));
-        // }
-        //
-        // for (final RepositoryEntry entry : entries) {
-        // if (entry.repoName.contains("docker")) {
-        // System.out.println(entry);
-        // System.out.print(countSlashes(entry.blobName) + " " + entry.blobName + " ");
-        // System.out.println(entry.getMavenVersion());
-        // }
-        // }
-        //
-        // propertiesToCSV(root, new File("D:\\temp\\nexus-properties\\entries.csv"));
-    }
-
-    private static int countSlashes(final String text) {
-        int count = 0;
-        for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == '/') {
-                count++;
-            }
-        }
-        return count;
+        System.out.println(size);
+        propertiesToCSV(root, new File("D:\\temp\\nexus-properties\\entries.csv"));
     }
 
     public static void propertiesToCSV(final File root, final File csvFile) throws IOException {
@@ -97,7 +67,8 @@ public class NexusExport {
                     "Creation Time", "Deleted", "File", "Maven Group", "Maven Artifact", "Maven Version", "Docker Name",
                     "Docker Version");
 
-            final DateFormat dateFormat = DateFormat.getDateTimeInstance();
+            final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
+                    Locale.GERMAN);
             out.write("sep=,\n");
             final CSVPrinter printer = format.print(out);
 
