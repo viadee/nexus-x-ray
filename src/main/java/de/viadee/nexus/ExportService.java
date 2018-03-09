@@ -113,7 +113,7 @@ public class ExportService {
 	}
     }
 
-    public static RepositoryEntry readEntry(final File file) {
+    public RepositoryEntry readEntry(final File file) {
 	try (final FileInputStream inputStream = new FileInputStream(file);
 		BufferedInputStream bufferIn = new BufferedInputStream(inputStream);
 		InputStreamReader reader = new InputStreamReader(bufferIn, "UTF-8")) {
