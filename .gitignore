@@ -2,3 +2,5 @@
 .classpath
 .settings/
 target/
+/output.csv
+/rat@nexus.intern.viadee.de
