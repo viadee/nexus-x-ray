@@ -37,7 +37,7 @@ header = {
 descriptionHeading = "@|bold %nDescription|@:%n",
 description = {
         "",
-        "Demonstrates picocli subcommands parsing and usage help.", },
+        "Analyze an existing Sonatype Nexus for high disk usage.", },
 optionListHeading = "@|bold %nOptions|@:%n",
 footer = {
         "ShipIT Day 2018 (viadee)" }
@@ -50,7 +50,7 @@ public class NexusExport implements Runnable {
 
     static final FileFilter propertiesFileFilter = f -> f.isFile() && f.getName().endsWith(".properties");
 
-    @Parameters(arity = "1..*", paramLabel = "FILE", description = "Property directories to use. This is usually something like '/data/nexus_repository/blobs/default/content'")
+    @Parameters(arity = "1..*", paramLabel = "DIRECTORY", description = "@|fg(5;4;2) Property directories to use. This is usually something like '/data/nexus_repository/blobs/default/content' |@")
     private File[] propertiesDirectories;
 
     @Option(names = { "-o", "--output-file" }, description = "@|fg(5;4;2) Output csv-file that should be created.|@")
