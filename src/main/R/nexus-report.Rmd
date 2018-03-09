@@ -94,9 +94,22 @@ viadee(ggplot()) +
 
 ```{r tagCloud}
 
-  ourEntriesSnapshots <- entries %>% filter(entries$Repository.Name=="maven-snapshots")  
-  ourEntriesReleases <- entries %>% filter(entries$Repository.Name=="maven-releases")  
-  wordcloud(words=ourEntriesSnapshots$Maven.Group, random.color = TRUE)
-  wordcloud(words=ourEntriesReleases$Maven.Group, colors = TRUE)
+  ourEntries <- entries %>% 
+    filter(entries$Repository.Name %in% c("maven-snapshots", "maven-releases"))  
+
+  wordcloud(words=ourEntries$Maven.Group)
+  wordcloud(words=ourEntries$Maven.Artifact)
+  
+  ourArtifacts <- ourEntries %>%
+    group_by(Maven.Artifact) %>%
+    summarise(MegaBytesUsed = sum(Size / 1024 / 1024))
+  
+  viadee(ggplot(ourArtifacts)) +
+      geom_bar(aes(x=reorder(ourArtifacts$Maven.Artifact, ourArtifacts$MegaBytesUsed), 
+                   y=ourArtifacts$MegaBytesUsed), 
+               colour="white", alpha=0.2, stat="Identity") +
+      labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
+           x = "Maven Artifacts", y = "MB")+
+    coord_flip()
 
 ```
