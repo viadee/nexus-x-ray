@@ -5,84 +5,92 @@ import java.util.Date;
 
 public class RepositoryEntry {
 
-      File file;
+    File file;
 
-      long size;
+    long size;
 
-      String repoName;
+    String repoName;
 
-      Date creationTime;
+    Date creationTime;
 
-      String blobName;
+    String blobName;
 
-      String contentType;
+    String contentType;
 
-      boolean deleted;
+    boolean deleted;
 
-      @Override
-      public String toString() {
-         return "RepositoryEntry [blobName=" + blobName + ", repoName=" + repoName + ", size=" + size
-               + ", creationTime=" + creationTime + ", contentType=" + contentType + ", deleted=" + deleted + ", file="
-               + file.getAbsolutePath() + "]";
-      }
+    @Override
+    public String toString() {
+        return "RepositoryEntry [blobName=" + blobName + ", repoName=" + repoName + ", size=" + size + ", creationTime="
+                + creationTime + ", contentType=" + contentType + ", deleted=" + deleted + ", file="
+                + file.getAbsolutePath() + "]";
+    }
 
-      public String getMavenVersion() {
-         if (NexusExport.isMavenArtifact(this)) {
+    public String getMavenVersion() {
+        if (isMavenArtifact()) {
             final String[] parts = blobName.split("/");
             return parts.length > 2 ? parts[parts.length - 2] : null;
-         } else {
+        } else {
             return null;
-         }
-      }
+        }
+    }
 
-      public String getMavenArtifactName() {
-         if (NexusExport.isMavenArtifact(this)) {
+    public String getMavenArtifactName() {
+        if (isMavenArtifact()) {
             final String[] parts = blobName.split("/");
             return parts.length > 3 ? parts[parts.length - 3] : null;
-         } else {
+        } else {
             return null;
-         }
-      }
+        }
+    }
 
-      public String getMavenGroupName() {
-         if (NexusExport.isMavenArtifact(this)) {
+    public String getMavenGroupName() {
+        if (isMavenArtifact()) {
             final String[] parts = blobName.split("/");
             final StringBuilder sb = new StringBuilder();
             for (int i = 0; i < parts.length - 3; i++) {
-               if (i > 0) {
-                  sb.append('.');
-               }
-               sb.append(parts[i]);
+                if (i > 0) {
+                    sb.append('.');
+                }
+                sb.append(parts[i]);
             }
             return sb.toString();
-         } else {
+        } else {
             return null;
-         }
-      }
+        }
+    }
 
-      public String getDockerManifestName() {
-         if (NexusExport.isDockerArtifact(this)) {
+    public String getDockerManifestName() {
+        if (isDockerArtifact()) {
             final String[] parts = blobName.split("/");
             if ("manifests".equals(parts[2])) {
-               return parts[1];
+                return parts[1];
             } else {
-               return null;
+                return null;
             }
-         } else {
+        } else {
             return null;
-         }
-      }
+        }
+    }
 
-      public String getDockerManifestVersion() {
-         if (NexusExport.isDockerArtifact(this)) {
+    public String getDockerManifestVersion() {
+        if (isDockerArtifact()) {
             final String[] parts = blobName.split("/");
             if ("manifests".equals(parts[2])) {
-               return parts[3];
+                return parts[3];
             } else {
-               return null;
+                return null;
             }
-         } else {
+        } else {
             return null;
-         }
-      }
-   }
+        }
+    }
+
+    public boolean isMavenArtifact() {
+        return !isDockerArtifact();
+    }
+
+    public boolean isDockerArtifact() {
+        return repoName.contains("docker");
+    }
+}
