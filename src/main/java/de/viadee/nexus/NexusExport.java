@@ -44,6 +44,14 @@ public class NexusExport implements Runnable {
     @Override
     public void run() {
         try {
+            if (!propertiesFile.exists()) {
+                System.out.println("Das angegebene Properties directory existiert nicht: " + propertiesFile);
+                return;
+            }
+
+            System.out.println("Verwende Properties directory: " + propertiesFile);
+            System.out.println("Zieldate: " + outputFile);
+
             propertiesToCSV(propertiesFile, outputFile);
         } catch (final IOException e) {
             e.printStackTrace();
@@ -134,5 +142,4 @@ public class NexusExport implements Runnable {
             throw new RuntimeException(ioe);
         }
     }
-
 }
