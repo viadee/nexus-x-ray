@@ -28,7 +28,7 @@ installAndLoad("dplyr") # Filter und joins
 source("viadeeTheme.R")
 
 # Annahme: Der Zeitstempel in der CSV-Datei ist mit deutscher Locale formatiert.
-entries <- read.csv("../../../data/entries.csv", sep=",")
+entries <- read.csv("../../../data/output.csv", sep=",")
 entries$Creation.Date <- as.Date(substr(entries$Creation.Time,1,10), format="%d.%m.%Y")
 
 
@@ -92,7 +92,7 @@ viadee(ggplot()) +
 
 ```
 
-```{r tagCloud}
+```{r tagCloudMaven}
 
   ourEntries <- entries %>% 
     filter(entries$Repository.Name %in% c("maven-snapshots", "maven-releases"))  
@@ -113,6 +113,29 @@ viadee(ggplot()) +
                colour="white", alpha=0.2, stat="Identity") +
       labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
            x = "Maven Artifacts", y = "MB")+
+    coord_flip()
+  
+```
+
+```{r tagCloudDocker}
+
+  ourContainers <- entries %>% 
+    filter(entries$Repository.Name %in% c("viadee-docker-nas"))  
+
+  wordcloud(words=ourContainers$Docker.Name)
+
+  ourContainerSizes <- ourContainers %>%
+    group_by(Docker.Name) %>%
+    summarise(MegaBytesUsed = sum(Size / 1024 / 1024)) %>%
+    arrange(desc(MegaBytesUsed)) %>%
+    head(20)
+    
+  viadee(ggplot(ourContainerSizes)) +
+      geom_bar(aes(x=reorder(ourContainerSizes$Docker.Name, ourContainerSizes$MegaBytesUsed), 
+                   y=ourContainerSizes$MegaBytesUsed), 
+               colour="white", alpha=0.2, stat="Identity") +
+      labs(title = "Leaderboard - Wer verwendet Nexus-Speicherplatz?",
+           x = "Docker-Containers", y = "MB")+
     coord_flip()
   
 ```
