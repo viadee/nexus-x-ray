@@ -5,9 +5,9 @@
 The goal of this project is to analyze an existing Sonatype [Nexus](https://www.sonatype.com/nexus-repository-oss) 
 installation, in order to identify projects or artifacts with high disk usage. The Nexus admin interface is regularly insufficient to attribute a sudden increase of disk usage to a particular project or person. We try to provide a solution here.
 
-It comes with a command-line interface (a small java application) which scans target paths. A .csv-File is then generated and can be visualized easily with the tools of your choice or with the given R code and diagram templates.
+It comes with a command-line interface (a small java application) which scans target paths. A .csv file is then generated and can be visualized easily with the tools of your choice or with the given R code and diagram templates.
 
-Hint: It is particularly difficult to estimate and the size of the docker files involved, since these appear to be more or less unrelated without access to the Nexus database. We join them together based on their date of creation, which should be working reasonably, unless you receive docker images on a scale of seconds.
+Hint: It is particularly difficult to estimate the size of the docker files involved, since these appear to be more or less unrelated without access to the Nexus database. We join them together based on their date of creation, which should be working reasonably, unless you receive docker images on a scale of seconds.
 
 ## Setup
 
