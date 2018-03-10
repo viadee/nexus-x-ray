@@ -2,17 +2,16 @@
 
 ![alt text](img/usage_zeke.png)
 
-This Project is to analyze an existing Sonatype Nexus Repository 
-installation, to identify projects or artifacts with high disk usage. 
+The goal of this project is to analyze an existing Sonatype [Nexus](https://www.sonatype.com/nexus-repository-oss) 
+installation, in order to identify projects or artifacts with high disk usage. The Nexus admin interface is regularly insufficient to attribute a sudden increase of disk usage to a particular project or person. We try to provide a solution here.
 
-It comes with a command-line interface where the target paths are 
-being passed. An output .csv is generated and can be visualized
-with the given R diagram templates.
+It comes with a command-line interface (a small java application) which scans target paths. A .csv-File is then generated and can be visualized easily with the tools of your choice or with the given R code and diagram templates.
+
+Hint: It is particularly difficult to estimate and the size of the docker files involved, since these appear to be more or less unrelated without access to the Nexus database. We join them together based on their date of creation, which should be working reasonably, unless you receive docker images on a scale of seconds.
 
 ## Setup
 
-Building this project requires Maven to be installed. Simply 
-call `mvn install` to package and install a fat-jar that
+Building this project requires Maven to be installed. Simply call `mvn install` to package and install a fat-jar that
 can be used on the target machine.
 
 
@@ -27,9 +26,11 @@ This application will remain under an open source licence indefinately.
 
 We follow the [semantic versioning](semver.org) scheme (2.0.0).
 
-In the sense of semantic versioning, the resulting XML and JSON outputs are the only public API provided here. We will keep these as stable as possible, in order to enable users to analyse and integrate results into the toolsets of their choice.
+In the sense of semantic versioning, the resulting CSV-outputs are the only public API provided here. We will keep these as stable as possible, in order to enable users to analyse and integrate results into the toolsets of their choice.
 
 ## Cooperation
+This is a result of the viadee Ship-It-Day (2018) and is hence not actively maintained, unless we find an interested community.
+
 Feel free to report issues, questions, ideas or patches. We are looking forward to it.
 
 
